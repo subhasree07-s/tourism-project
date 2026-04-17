@@ -2,45 +2,64 @@ const express = require('express');
 const router = express.Router();
 const Package = require('../models/Package');
 const { authenticate, authorizeAdmin } = require('../middleware/authMiddleware');
-const redisClient = require('../config/redisClient');
-const { sendToQueue } = require('../config/rabbitmq');
+
+// 🔥 OPTIONAL SERVICES (SAFE LOAD)
+let redisClient = null;
+let sendToQueue = null;
+
+try {
+  redisClient = require('../config/redisClient');
+} catch {}
+
+try {
+  sendToQueue = require('../config/rabbitmq').sendToQueue;
+} catch {}
 
 
 // ===============================
-// ✅ GET ALL PACKAGES (WITH CACHE + QUEUE)
+// ✅ GET ALL PACKAGES (SAFE VERSION)
 // ===============================
 router.get('/', async (req, res) => {
   try {
     console.log(`📦 Packages fetched by worker ${process.pid}`);
 
-    // 🔥 SEND EVENT TO MICROSERVICE (FIXED POSITION)
+    // ✅ Queue (optional, won't crash)
     try {
-      console.log("📤 Sending package event to queue...");
-
-      sendToQueue("packageQueue", {
-        action: "fetch_packages"
-      });
-
+      if (sendToQueue) {
+        sendToQueue("packageQueue", { action: "fetch_packages" });
+      }
     } catch (err) {
       console.log("⚠️ Queue error:", err.message);
     }
 
-    // 🔥 1. Check cache
-    const cachedData = await redisClient.get("packages");
+    // ✅ Cache (only if Redis exists)
+    if (redisClient) {
+      try {
+        const cachedData = await redisClient.get("packages");
 
-    if (cachedData) {
-      return res.json({
-        success: true,
-        source: "cache",
-        data: JSON.parse(cachedData)
-      });
+        if (cachedData) {
+          return res.json({
+            success: true,
+            source: "cache",
+            data: JSON.parse(cachedData)
+          });
+        }
+      } catch (err) {
+        console.log("⚠️ Redis read error:", err.message);
+      }
     }
 
-    // 🔥 2. Fetch from DB
+    // ✅ Fetch from DB
     const packages = await Package.find().populate('destination');
 
-    // 🔥 3. Store in cache
-    await redisClient.setEx("packages", 60, JSON.stringify(packages));
+    // ✅ Store cache (if Redis exists)
+    if (redisClient) {
+      try {
+        await redisClient.setEx("packages", 60, JSON.stringify(packages));
+      } catch (err) {
+        console.log("⚠️ Redis write error:", err.message);
+      }
+    }
 
     res.json({
       success: true,
@@ -79,8 +98,6 @@ router.get('/:id', async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Fetch single package error:", err);
-
     res.status(500).json({
       success: false,
       message: err.message
@@ -90,47 +107,18 @@ router.get('/:id', async (req, res) => {
 
 
 // ===============================
-// ✅ CREATE PACKAGE (CLEAR CACHE)
+// ✅ CREATE PACKAGE
 // ===============================
 router.post('/', authenticate, authorizeAdmin, async (req, res) => {
   try {
-    const {
-      name,
-      description,
-      destination,
-      duration,
-      price,
-      image,
-      transportation,
-      sightseeing,
-      meals,
-      itinerary,
-      hotels
-    } = req.body;
+    const newPackage = await Package.create(req.body);
 
-    if (!name || !destination || !duration || !price) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields"
-      });
+    // Clear cache safely
+    if (redisClient) {
+      try {
+        await redisClient.del("packages");
+      } catch {}
     }
-
-    const newPackage = await Package.create({
-      name,
-      description,
-      destination,
-      duration,
-      price,
-      image,
-      transportation: transportation || [],
-      sightseeing: sightseeing || [],
-      meals: meals || [],
-      itinerary: itinerary || [],
-      hotels: hotels || []
-    });
-
-    // 🔥 CLEAR CACHE
-    await redisClient.del("packages");
 
     res.status(201).json({
       success: true,
@@ -138,8 +126,6 @@ router.post('/', authenticate, authorizeAdmin, async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Create package error:", err);
-
     res.status(500).json({
       success: false,
       message: err.message
@@ -149,7 +135,7 @@ router.post('/', authenticate, authorizeAdmin, async (req, res) => {
 
 
 // ===============================
-// ✅ UPDATE PACKAGE (CLEAR CACHE)
+// ✅ UPDATE PACKAGE
 // ===============================
 router.put('/:id', authenticate, authorizeAdmin, async (req, res) => {
   try {
@@ -159,7 +145,11 @@ router.put('/:id', authenticate, authorizeAdmin, async (req, res) => {
       { new: true }
     );
 
-    await redisClient.del("packages");
+    if (redisClient) {
+      try {
+        await redisClient.del("packages");
+      } catch {}
+    }
 
     res.json({
       success: true,
@@ -167,8 +157,6 @@ router.put('/:id', authenticate, authorizeAdmin, async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Update package error:", err);
-
     res.status(500).json({
       success: false,
       message: err.message
@@ -178,13 +166,17 @@ router.put('/:id', authenticate, authorizeAdmin, async (req, res) => {
 
 
 // ===============================
-// ✅ DELETE PACKAGE (CLEAR CACHE)
+// ✅ DELETE PACKAGE
 // ===============================
 router.delete('/:id', authenticate, authorizeAdmin, async (req, res) => {
   try {
     await Package.findByIdAndDelete(req.params.id);
 
-    await redisClient.del("packages");
+    if (redisClient) {
+      try {
+        await redisClient.del("packages");
+      } catch {}
+    }
 
     res.json({
       success: true,
@@ -192,14 +184,11 @@ router.delete('/:id', authenticate, authorizeAdmin, async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Delete package error:", err);
-
     res.status(500).json({
       success: false,
       message: err.message
     });
   }
 });
-
 
 module.exports = router;

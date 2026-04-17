@@ -38,8 +38,8 @@ router.get("/shorten", async (req, res) => {
 
     res.send(`
       <p>✅ Short URL created:</p>
-      <a href="https://tourism-project.up.railway.app/${shortId}" target="_blank">
-        https://tourism-project.up.railway.app/${shortId}
+      <a href="https://tourism-project-production-072c.up.railway.app/${shortId}" target="_blank">
+        https://tourism-project-production-072c.up.railway.app/${shortId}
       </a>
     `);
 
@@ -63,7 +63,7 @@ router.post("/shorten", async (req, res) => {
 
     res.json({
       success: true,
-      shortUrl: `https://tourism-project.up.railway.app/${shortId}`
+      shortUrl: `https://tourism-project-production-072c.up.railway.app/${shortId}`
     });
 
   } catch (err) {
