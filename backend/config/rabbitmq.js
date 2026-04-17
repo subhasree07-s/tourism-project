@@ -3,15 +3,21 @@ const amqp = require("amqplib");
 let channel;
 
 async function connectQueue() {
-  const connection = await amqp.connect("amqp://localhost");
+  if (!process.env.RABBITMQ_URL) {
+    console.log("⚠️ RabbitMQ not connected (no RABBITMQ_URL)");
+    return;
+  }
+
+  const connection = await amqp.connect(process.env.RABBITMQ_URL);
   channel = await connection.createChannel();
   await channel.assertQueue("bookingQueue");
+
   console.log("✅ RabbitMQ Connected");
 }
 
 function sendToQueue(queueName, data) {
   if (!channel) {
-    console.error("waiting for Rabbitmq...");
+    console.log("⚠️ RabbitMQ not ready");
     return;
   }
 
@@ -22,4 +28,5 @@ function sendToQueue(queueName, data) {
 
   console.log(`📤 Sent to ${queueName}:`, data);
 }
+
 module.exports = { connectQueue, sendToQueue };
