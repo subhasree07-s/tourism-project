@@ -38,8 +38,8 @@ router.get("/shorten", async (req, res) => {
 
     res.send(`
       <p>✅ Short URL created:</p>
-      <a href="http://localhost:5000/${shortId}" target="_blank">
-        http://localhost:5000/${shortId}
+      <a href="https://tourism-project.up.railway.app/${shortId}" target="_blank">
+        https://tourism-project.up.railway.app/${shortId}
       </a>
     `);
 
@@ -63,7 +63,7 @@ router.post("/shorten", async (req, res) => {
 
     res.json({
       success: true,
-      shortUrl: `http://localhost:5000/${shortId}`
+      shortUrl: `https://tourism-project.up.railway.app/${shortId}`
     });
 
   } catch (err) {

@@ -55,9 +55,14 @@ if (!isProduction && cluster.isMaster) {
   // ✅ MIDDLEWARE
   // ===============================
   app.use(cors({
-    origin: "*",   // ✅ changed from localhost to allow deployment
-    credentials: true
-  }));
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
+// 🔥 VERY IMPORTANT (this fixes preflight 404)
+app.options("*", cors());
 
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
