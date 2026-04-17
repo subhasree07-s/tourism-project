@@ -1,0 +1,28 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4f6fa;
+}
+.card {
+  text-align: center;
+  background: #fff;
+  padding: 3rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+.icon { font-size: 4rem; }
+h1 { color: #c0392b; }
+p  { color: #555; }
+button {
+  margin-top: 1rem;
+  background: #1a3c5e;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+button:hover { background: #2980b9; }

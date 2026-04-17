@@ -1,0 +1,195 @@
+.container {
+  padding: 25px;
+  background: #f5f7fb;
+  min-height: 100vh;
+}
+
+.heading {
+  margin-bottom: 20px;
+}
+
+/* GRID LAYOUT */
+.layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 25px;
+}
+
+/* LEFT PANEL */
+.left {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* RIGHT PANEL */
+.right {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  height: fit-content;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* INPUTS */
+input, select, textarea {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+textarea {
+  min-height: 60px;
+}
+
+/* HOTEL CARD */
+.hotelCard {
+  background: #f9f9f9;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* BUTTONS */
+.submitBtn {
+  background: #007bff;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.addHotelBtn {
+  background: #28a745;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  width: 100%;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+/* HOVER */
+.submitBtn:hover {
+  background: #0056b3;
+}
+
+.addHotelBtn:hover {
+  background: #1e7e34;
+}
+.tableSection {
+  margin-top: 30px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.table th {
+  background: #1e3c72;
+  color: white;
+  padding: 12px;
+}
+
+.table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.table tr:hover {
+  background: #f5f5f5;
+}
+/* ===== DASHBOARD ===== */
+
+.dashboard {
+  padding: 30px 40px;
+  background: #f5f7fb;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  color: #777;
+  margin-bottom: 25px;
+}
+
+/* ===== GRID ===== */
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+/* ===== CARD ===== */
+
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 25px;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transition: 0.3s ease;
+  border-top: 4px solid #facc15; /* yellow top border */
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+/* ===== ICON ===== */
+
+.icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+/* ===== TEXT ===== */
+
+.card h2 {
+  font-size: 28px;
+  color: #1e3a5f;
+  margin: 10px 0;
+}
+
+.card p {
+  color: #666;
+  font-size: 14px;
+}
+.card {
+  cursor: pointer; /* 🔥 makes cards clickable */
+}
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 25px;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transition: 0.3s ease;
+  border-top: 4px solid #facc15;
+  cursor: pointer; /* ✅ IMPORTANT */
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
