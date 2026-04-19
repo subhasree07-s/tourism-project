@@ -82,6 +82,11 @@ h1 { color:#1a3c5e; margin-bottom: 0.3rem; }
 .hero {
   height: 100vh;
   position: relative;
+
+  background-image: url("/matt-wang-4t5IhN_ZGQ8-unsplash.jpg"); /* ✅ ADD THIS */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 .hero h1{
   color:rgb(136, 248, 136);
