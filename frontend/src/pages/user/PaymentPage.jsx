@@ -20,7 +20,7 @@ const PaymentPage = () => {
 
   const [loading, setLoading] = useState(false);
 
-  // ✅ NEW: error state (for showing on screen)
+  // ✅ NEW: error message state
   const [error, setError] = useState("");
 
   if (!pkg || !hotel) {
@@ -52,7 +52,7 @@ const PaymentPage = () => {
       }
 
       setLoading(true);
-      setError(""); // clear old error
+      setError(""); // clear previous error
 
       const res = await api.post("/bookings", {
         packageId: pkg._id,
@@ -92,17 +92,31 @@ const PaymentPage = () => {
     } catch (err) {
       console.error("Payment error:", err.response?.data || err);
 
-      // ✅ IMPORTANT CHANGE: show error on UI
-      setError(
-        err.response?.data?.message ||
-        "❌ Payment Failed. Please try again."
-      );
+      // ✅ SHOW ERROR ON SCREEN
+      setError(err.response?.data?.message || "Booking failed");
 
-      // optional alert (keep if you want)
       alert(err.response?.data?.message || "Booking failed");
-
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ✅ NEW: FORCE MULTIPLE REQUESTS (for demo)
+  const testRateLimit = async () => {
+    try {
+      setError("");
+      for (let i = 0; i < 5; i++) {
+        await api.post("/bookings", {
+          packageId: pkg._id,
+          hotel: hotel,
+          numberOfPeople: 1,
+          totalAmount: total,
+          paymentMethod: "TEST",
+        });
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Rate limit triggered");
+      alert(err.response?.data?.message || "Rate limit triggered");
     }
   };
 
@@ -113,7 +127,7 @@ const PaymentPage = () => {
       <div className={styles.container}>
         <h1>💳 Payment & Booking</h1>
 
-        {/* ✅ NEW: ERROR DISPLAY */}
+        {/* ✅ ERROR DISPLAY */}
         {error && (
           <p style={{ color: "red", fontWeight: "bold" }}>
             {error}
@@ -164,6 +178,14 @@ const PaymentPage = () => {
           disabled={loading}
         >
           {loading ? "Processing..." : `Confirm & Pay ₹${total}`}
+        </button>
+
+        {/* ✅ TEST BUTTON (REMOVE AFTER DEMO) */}
+        <button
+          style={{ marginTop: "10px", background: "red", color: "white" }}
+          onClick={testRateLimit}
+        >
+          🔥 Test Rate Limit
         </button>
       </div>
     </>
