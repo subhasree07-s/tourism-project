@@ -20,7 +20,9 @@ const PaymentPage = () => {
 
   const [loading, setLoading] = useState(false);
 
-  // ❗ SAFETY CHECK
+  // ✅ NEW: error state (for showing on screen)
+  const [error, setError] = useState("");
+
   if (!pkg || !hotel) {
     return (
       <>
@@ -42,18 +44,16 @@ const PaymentPage = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // ✅ FINAL PAYMENT FUNCTION
   const handlePayment = async () => {
     try {
-      // VALIDATION
       if (!form.name || !form.email || !form.phone) {
         alert("Please fill all details");
         return;
       }
 
       setLoading(true);
+      setError(""); // clear old error
 
-      // ✅ SAVE BOOKING IN DB
       const res = await api.post("/bookings", {
         packageId: pkg._id,
         hotel: hotel,
@@ -64,7 +64,6 @@ const PaymentPage = () => {
 
       console.log("Booking success:", res.data);
 
-      // ✅ CREATE STRUCTURED RECEIPT (VERY IMPORTANT)
       const receiptData = {
         customer: {
           name: form.name,
@@ -86,19 +85,22 @@ const PaymentPage = () => {
         },
       };
 
-      // ✅ STORE IN LOCAL STORAGE
       localStorage.setItem("receipt", JSON.stringify(receiptData));
 
-      // ✅ REDIRECT TO RECEIPT PAGE
       navigate("/receipt");
 
     } catch (err) {
       console.error("Payment error:", err.response?.data || err);
 
-      alert(
+      // ✅ IMPORTANT CHANGE: show error on UI
+      setError(
         err.response?.data?.message ||
-        "❌ Payment Failed. Check console."
+        "❌ Payment Failed. Please try again."
       );
+
+      // optional alert (keep if you want)
+      alert(err.response?.data?.message || "Booking failed");
+
     } finally {
       setLoading(false);
     }
@@ -111,7 +113,13 @@ const PaymentPage = () => {
       <div className={styles.container}>
         <h1>💳 Payment & Booking</h1>
 
-        {/* SUMMARY */}
+        {/* ✅ NEW: ERROR DISPLAY */}
+        {error && (
+          <p style={{ color: "red", fontWeight: "bold" }}>
+            {error}
+          </p>
+        )}
+
         <div className={styles.card}>
           <h2>Booking Summary</h2>
           <p><b>Package:</b> {pkg.name}</p>
@@ -124,30 +132,12 @@ const PaymentPage = () => {
           <h3>Total Payable: ₹{total}</h3>
         </div>
 
-        {/* CUSTOMER DETAILS */}
         <div className={styles.card}>
           <h2>Customer Details</h2>
 
-          <input
-            name="name"
-            placeholder="Full Name"
-            value={form.name}
-            onChange={handleChange}
-          />
-
-          <input
-            name="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={handleChange}
-          />
-
-          <input
-            name="phone"
-            placeholder="Phone Number"
-            value={form.phone}
-            onChange={handleChange}
-          />
+          <input name="name" placeholder="Full Name" value={form.name} onChange={handleChange} />
+          <input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
+          <input name="phone" placeholder="Phone Number" value={form.phone} onChange={handleChange} />
 
           <input
             name="persons"
@@ -158,22 +148,16 @@ const PaymentPage = () => {
           />
         </div>
 
-        {/* PAYMENT METHOD */}
         <div className={styles.card}>
           <h2>Payment Method</h2>
 
-          <select
-            name="method"
-            value={form.method}
-            onChange={handleChange}
-          >
+          <select name="method" value={form.method} onChange={handleChange}>
             <option value="UPI">UPI</option>
             <option value="Card">Card</option>
             <option value="Net Banking">Net Banking</option>
           </select>
         </div>
 
-        {/* BUTTON */}
         <button
           className={styles.payBtn}
           onClick={handlePayment}
