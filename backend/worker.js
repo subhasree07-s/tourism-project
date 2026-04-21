@@ -1,5 +1,5 @@
 const amqp = require("amqplib");
-
+require("dotenv").config();
 async function startWorker() {
   try {
     const connection = await amqp.connect(process.env.RABBITMQ_URL);
