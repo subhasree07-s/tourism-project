@@ -1,28 +1,31 @@
 const amqp = require("amqplib");
 require("dotenv").config();
+
 async function startWorker() {
   try {
     const connection = await amqp.connect(process.env.RABBITMQ_URL);
     const channel = await connection.createChannel();
 
-    const queue = ["authQueue","bookingQueue","packageQueue"];
+    const queues = ["authQueue", "bookingQueue", "packageQueue"];
 
-    await channel.assertQueue(queue);
+    console.log("Worker started...");
 
-    console.log("Worker started");
+    for (const queue of queues) {
+      await channel.assertQueue(queue);
 
-    channel.consume(queue, (msg) => {
-      if (msg !== null) {
-        const data = JSON.parse(msg.content.toString());
+      channel.consume(queue, (msg) => {
+        if (msg !== null) {
+          const data = JSON.parse(msg.content.toString());
 
-        console.log("Received:", data);
+          console.log(`📥 Received from ${queue}:`, data);
 
-        setTimeout(() => {
-          console.log("Processed:", data.email);
-          channel.ack(msg);
-        }, 2000);
-      }
-    });
+          setTimeout(() => {
+            console.log(`✅ Processed from ${queue}:`, data.email || data);
+            channel.ack(msg);
+          }, 2000);
+        }
+      });
+    }
 
   } catch (err) {
     console.error("Worker error:", err.message);
