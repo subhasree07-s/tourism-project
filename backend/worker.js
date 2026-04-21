@@ -5,7 +5,7 @@ async function startWorker() {
     const connection = await amqp.connect(process.env.RABBITMQ_URL);
     const channel = await connection.createChannel();
 
-    const queue = "authQueue";
+    const queue = ["authQueue","bookingQueue","packageQueue"];
 
     await channel.assertQueue(queue);
 
