@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
+
 const Booking = require('../models/Booking');
 const { authenticate, authorizeAdmin } = require('../middleware/authMiddleware');
 const { bookingLimiter } = require('../middleware/rateLimiter');
+const { sendToQueue } = require('../config/rabbitmq'); // ✅ moved to top
 
 // =======================================
 // ✅ 1. GET ALL BOOKINGS (ADMIN ONLY)
@@ -10,64 +12,40 @@ const { bookingLimiter } = require('../middleware/rateLimiter');
 router.get('/', authenticate, authorizeAdmin, async (req, res) => {
   try {
     const bookings = await Booking.find()
-      .populate('user', 'name email')     // get user details
-      .populate('package', 'name price'); // get package details
+      .populate('user', 'name email')
+      .populate('package', 'name price');
 
-    res.json({
-      success: true,
-      data: bookings
-    });
+    res.json({ success: true, data: bookings });
 
   } catch (error) {
-    console.error("Error fetching bookings:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-
 // =======================================
-// ✅ 2. GET LOGGED-IN USER BOOKINGS
+// ✅ 2. GET USER BOOKINGS
 // =======================================
 router.get('/my', authenticate, async (req, res) => {
   try {
     const bookings = await Booking.find({ user: req.user._id })
       .populate('package', 'name price');
 
-    res.json({
-      success: true,
-      data: bookings
-    });
+    res.json({ success: true, data: bookings });
 
   } catch (error) {
-    console.error("Error fetching user bookings:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-
 // =======================================
-// ✅ 3. CREATE BOOKING (PAYMENT)
+// ✅ 3. CREATE BOOKING (RATE LIMITED)
 // =======================================
-router.post('/', authenticate,bookingLimiter, async (req, res) => {
+router.post('/', authenticate, bookingLimiter, async (req, res) => {
   try {
     console.log(`🧾 Booking handled by worker ${process.pid}`);
-    const {
-      packageId,
-      hotel,
-      numberOfPeople,
-      totalAmount,
-      paymentMethod
-    } = req.body;
 
-    // 🔥 validation
+    const { packageId, hotel, numberOfPeople, totalAmount, paymentMethod } = req.body;
+
     if (!packageId || !hotel || !numberOfPeople || !totalAmount) {
       return res.status(400).json({
         success: false,
@@ -84,18 +62,18 @@ router.post('/', authenticate,bookingLimiter, async (req, res) => {
       paymentMethod,
       status: "confirmed"
     });
-    const { sendToQueue } = require('../config/rabbitmq');
 
-try {
-  console.log("sending booking to queue");
-  sendToQueue("bookingQueue", {
-    bookingId: booking._id,
-    user: req.user._id,
-    totalAmount: totalAmount
-  });
-} catch (err) {
-  console.log("⚠️ Queue error:", err.message);
-}
+    // ✅ Send to RabbitMQ
+    try {
+      console.log("📤 Sending booking to queue...");
+      sendToQueue("bookingQueue", {
+        bookingId: booking._id,
+        user: req.user._id,
+        totalAmount
+      });
+    } catch (err) {
+      console.log("⚠️ Queue error:", err.message);
+    }
 
     res.status(201).json({
       success: true,
@@ -103,8 +81,6 @@ try {
     });
 
   } catch (error) {
-    console.error("Error creating booking:", error);
-
     res.status(500).json({
       success: false,
       message: "Server error"
@@ -112,9 +88,8 @@ try {
   }
 });
 
-
 // =======================================
-// ✅ 4. UPDATE STATUS (OPTIONAL ADMIN)
+// ✅ 4. UPDATE BOOKING (ADMIN)
 // =======================================
 router.put('/:id', authenticate, authorizeAdmin, async (req, res) => {
   try {
@@ -124,22 +99,15 @@ router.put('/:id', authenticate, authorizeAdmin, async (req, res) => {
       { new: true }
     );
 
-    res.json({
-      success: true,
-      data: updated
-    });
+    res.json({ success: true, data: updated });
 
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
-
 // =======================================
-// ✅ 5. DELETE BOOKING (OPTIONAL ADMIN)
+// ✅ 5. DELETE BOOKING (ADMIN)
 // =======================================
 router.delete('/:id', authenticate, authorizeAdmin, async (req, res) => {
   try {
@@ -151,12 +119,8 @@ router.delete('/:id', authenticate, authorizeAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
-
 
 module.exports = router;
