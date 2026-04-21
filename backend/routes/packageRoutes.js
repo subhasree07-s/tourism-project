@@ -17,13 +17,13 @@ try {
 
 
 // ===============================
-// ✅ GET ALL PACKAGES (SAFE VERSION)
+// ✅ GET ALL PACKAGES (CACHE + QUEUE)
 // ===============================
 router.get('/', async (req, res) => {
   try {
     console.log(`📦 Packages fetched by worker ${process.pid}`);
 
-    // ✅ Queue (optional, won't crash)
+    // ✅ Queue (optional)
     try {
       if (sendToQueue) {
         sendToQueue("packageQueue", { action: "fetch_packages" });
@@ -32,12 +32,14 @@ router.get('/', async (req, res) => {
       console.log("⚠️ Queue error:", err.message);
     }
 
-    // ✅ Cache (only if Redis exists)
+    // ✅ CACHE CHECK
     if (redisClient) {
       try {
         const cachedData = await redisClient.get("packages");
 
         if (cachedData) {
+          console.log("⚡ Serving from Redis cache");
+
           return res.json({
             success: true,
             source: "cache",
@@ -49,10 +51,12 @@ router.get('/', async (req, res) => {
       }
     }
 
-    // ✅ Fetch from DB
+    // ✅ FETCH FROM DB
+    console.log("💾 Fetching from MongoDB");
+
     const packages = await Package.find().populate('destination');
 
-    // ✅ Store cache (if Redis exists)
+    // ✅ STORE CACHE
     if (redisClient) {
       try {
         await redisClient.setEx("packages", 60, JSON.stringify(packages));
@@ -113,10 +117,11 @@ router.post('/', authenticate, authorizeAdmin, async (req, res) => {
   try {
     const newPackage = await Package.create(req.body);
 
-    // Clear cache safely
+    // 🔥 CLEAR CACHE
     if (redisClient) {
       try {
         await redisClient.del("packages");
+        console.log("🧹 Cache cleared after CREATE");
       } catch {}
     }
 
@@ -148,6 +153,7 @@ router.put('/:id', authenticate, authorizeAdmin, async (req, res) => {
     if (redisClient) {
       try {
         await redisClient.del("packages");
+        console.log("🧹 Cache cleared after UPDATE");
       } catch {}
     }
 
@@ -175,6 +181,7 @@ router.delete('/:id', authenticate, authorizeAdmin, async (req, res) => {
     if (redisClient) {
       try {
         await redisClient.del("packages");
+        console.log("🧹 Cache cleared after DELETE");
       } catch {}
     }
 
