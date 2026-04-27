@@ -5,7 +5,7 @@ const { nanoid } = require("nanoid");
 
 
 // ===============================
-// ✅ 1. FORM UI (BROWSER DEMO)
+// ✅ FORM UI
 // ===============================
 router.get("/form", (req, res) => {
   res.send(`
@@ -19,17 +19,24 @@ router.get("/form", (req, res) => {
 
 
 // ===============================
-// ✅ 2. CREATE SHORT URL (GET - BROWSER)
+// ✅ CREATE SHORT URL (GET)
 // ===============================
 router.get("/shorten", async (req, res) => {
   try {
     const { url } = req.query;
 
-    if (!url) {
-      return res.send("❌ Please provide URL like: /api/url/shorten?url=https://google.com");
+    if (!url || !url.startsWith("http")) {
+      return res.send("❌ Invalid URL");
     }
 
-    const shortId = nanoid(6);
+    let shortId;
+    let exists = true;
+
+    while (exists) {
+      shortId = nanoid(6);
+      const existing = await Url.findOne({ shortId });
+      if (!existing) exists = false;
+    }
 
     await Url.create({
       originalUrl: url,
@@ -38,8 +45,8 @@ router.get("/shorten", async (req, res) => {
 
     res.send(`
       <p>✅ Short URL created:</p>
-      <a href="https://tourism-project-production-072c.up.railway.app/${shortId}" target="_blank">
-        https://tourism-project-production-072c.up.railway.app/${shortId}
+      <a href="${process.env.BASE_URL}/${shortId}" target="_blank">
+        ${process.env.BASE_URL}/${shortId}
       </a>
     `);
 
@@ -50,20 +57,36 @@ router.get("/shorten", async (req, res) => {
 
 
 // ===============================
-// ✅ 3. CREATE SHORT URL (POST - API)
+// ✅ CREATE SHORT URL (POST)
 // ===============================
 router.post("/shorten", async (req, res) => {
   try {
-    const shortId = nanoid(6);
+    const { url } = req.body;
 
-    const url = await Url.create({
-      originalUrl: req.body.url,
+    if (!url || !url.startsWith("http")) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid URL"
+      });
+    }
+
+    let shortId;
+    let exists = true;
+
+    while (exists) {
+      shortId = nanoid(6);
+      const existing = await Url.findOne({ shortId });
+      if (!existing) exists = false;
+    }
+
+    await Url.create({
+      originalUrl: url,
       shortId
     });
 
     res.json({
       success: true,
-      shortUrl: `https://tourism-project-production-072c.up.railway.app/${shortId}`
+      shortUrl: `${process.env.BASE_URL}/${shortId}`
     });
 
   } catch (err) {
@@ -76,7 +99,7 @@ router.post("/shorten", async (req, res) => {
 
 
 // ===============================
-// ✅ 4. REDIRECT TO ORIGINAL URL
+// ✅ REDIRECT
 // ===============================
 router.get("/:id", async (req, res) => {
   try {
