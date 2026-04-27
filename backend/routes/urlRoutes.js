@@ -43,10 +43,13 @@ router.get("/shorten", async (req, res) => {
       shortId
     });
 
+    // 🔥 FIX: fallback base URL
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
+
     res.send(`
       <p>✅ Short URL created:</p>
-      <a href="${process.env.BASE_URL}/${shortId}" target="_blank">
-        ${process.env.BASE_URL}/${shortId}
+      <a href="${baseUrl}/${shortId}" target="_blank">
+        ${baseUrl}/${shortId}
       </a>
     `);
 
@@ -84,9 +87,12 @@ router.post("/shorten", async (req, res) => {
       shortId
     });
 
+    // 🔥 FIX: fallback base URL
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
+
     res.json({
       success: true,
-      shortUrl: `${process.env.BASE_URL}/${shortId}`
+      shortUrl: `${baseUrl}/${shortId}`
     });
 
   } catch (err) {
