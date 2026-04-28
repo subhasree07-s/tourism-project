@@ -27,7 +27,7 @@ const apiLimiter = rateLimit({
 // 🔐 LOGIN LIMIT (PER USER/IP)
 // ===============================
 const loginLimiter = rateLimit({
-  windowMs: 25 * 1000,
+  windowMs: 1*60 * 1000,
   max: 3,
   message: {
     success: false,
