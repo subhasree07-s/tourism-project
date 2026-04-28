@@ -8,7 +8,7 @@ const redisClient = require("../config/redisClient");
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 10, // total requests allowed globally
-  keyGenerator: () => "global", // 🔥 makes it GLOBAL
+  keyGenerator: () => "global_v2", // 🔥 makes it GLOBAL
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -43,7 +43,7 @@ const loginLimiter = rateLimit({
 const bookingLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 5, // 5 bookings allowed globally
-  keyGenerator: () => "global", // 🔥 makes it GLOBAL
+  keyGenerator: () => "global_v2", // 🔥 makes it GLOBAL
   message: {
     success: false,
     message: "Too many booking requests globally."
